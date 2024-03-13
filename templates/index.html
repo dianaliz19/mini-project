@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>My Flask App</title>
+</head>
+<body>
+    <h1>Scraped Data</h1>
+    <ul>
+        {% for item in scraped_data %}
+            <li>{{ item }}</li>
+        {% endfor %}
+    </ul>
+</body>
+</html>
