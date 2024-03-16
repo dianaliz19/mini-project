@@ -5,9 +5,20 @@
 </head>
 <body>
     <h1>Scraped Data</h1>
+    {% set colleges = [] %}
     <ul>
         {% for item in scraped_data %}
-            <li>{{ item }}</li>
+            {% if item.college not in colleges %}
+                {% set _ = colleges.append(item.college) %}
+                <li>College: {{ item.college }}</li>
+                <ul>
+                    {% for event in item.events %}
+                        {% if event.strip() %}
+                            <li>{{ event.strip() }}</li>
+                        {% endif %}
+                    {% endfor %}
+                </ul>
+            {% endif %}
         {% endfor %}
     </ul>
 </body>
