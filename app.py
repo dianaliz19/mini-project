@@ -1,9 +1,14 @@
-from flask import Flask, render_template
+from flask import Flask, render_template,url_for
+#from pymongo import mongo
+from flask import redirect
 from pymongo import MongoClient
 import requests
 from bs4 import BeautifulSoup
+import schedule
+import time
+import re
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder='static')
 
 # MongoDB configuration
 MONGO_URI = 'mongodb://localhost:27017/'
@@ -17,44 +22,100 @@ collection = db[COLLECTION_NAME]
 
 # Function to scrape events from College A website
 def scrape_cet():
-    url='https://www.cet.ac.in/short-term-courses/'
+    url = 'https://www.cet.ac.in/short-term-courses/'
     response = requests.get(url)
     if response.status_code == 200:
-        text=response.content
-        data=BeautifulSoup(text,'html.parser')
-        events=data.find(id="lcp_instance_0")
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        events = data.find(id="lcp_instance_0")
         event_text = events.get_text(separator='\n')
         return event_text.strip()
     else:
         return []
 
 def scrape_nit():
-    url='https://nitc.ac.in/upcoming-events'
+    url = 'https://nitc.ac.in/upcoming-events'
     response = requests.get(url)
     if response.status_code == 200:
-        text=response.content
-        data=BeautifulSoup(text,'html.parser')
-        events=data.find(class_="xc-page-column-right")
-        results=events.find(class_="xc-calendar-list")
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        events = data.find(class_="xc-page-column-right")
+        results = events.find(class_="xc-calendar-list")
         event_text = results.get_text(separator='\n')
         return event_text.strip()
     else:
         return []
 
+#def scrape_iitb():
+    url = 'https://www.iitb.ac.in/events'
+    response = requests.get(url)
+    if response.status_code == 200:
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        events = data.find(class_="fc-list-table")
+        results = events.find(class_="fc-list-item fc-has-url")
+        event_text = results.get_text(separator='\n')
+        return event_text.strip()
+    else:
+        return []
+
+# Function to scrape events from all college websites and update MongoDB
+# Function to scrape events from all college websites and update MongoDB
+def scrape_and_update():
+    #collection.delete_many({})
+    events_cet = scrape_cet().split('\n')
+    events_nit = scrape_nit().split('\n')
+    #events_iitb = scrape_iitb().split('\n')
+
+    # Strip extra spaces and newlines from each event
+    events_cet = [event.strip() for event in events_cet if event.strip()]
+    events_nit = [event.strip() for event in events_nit if event.strip()]
+    #events_iitb = [event.strip() for event in events_iitb if event.strip()]
+
+    # Insert stripped events into MongoDB
+    collection.insert_one({'college': 'Cet', 'events': events_cet})
+    collection.insert_one({'college': 'nit', 'events': events_nit})
+    #collection.insert_one({'college': 'iitb', 'events': events_iitb})
+
+    print("Events scraped and updated in MongoDB")
+
+    
+
+# Schedule the scraping and updating task to run every 60 seconds
+schedule.every(60).seconds.do(scrape_and_update)
+
+# Flask route to render the index.html template with scraped data
 @app.route('/')
 def index():
-    collection.delete_many({})
-    # Scrape events from College A and College B
-    events_cet = scrape_cet()
-    events_nit = scrape_nit()
-    print("CET events:", events_cet)
-    print("NIT events:", events_nit)
-    # Store the scraped events in MongoDB
-    collection.insert_one({'college': 'Cet', 'events': events_cet.split('\n')})
-    collection.insert_one({'college': 'nit', 'events': events_nit.split('\n')})
-    # Retrieve the scraped events from MongoDB
-    scraped_data = collection.find({},{'_id':0})
-    return render_template('index.html', scraped_data=scraped_data)
+    return render_template('index.html')
+
+@app.route('/event-details')
+def event_details():
+    # Fetch data from MongoDB and convert cursor to list of dictionaries
+    cursor = collection.find({}, {'_id': 0})
+    scraped_data = [doc for doc in cursor]
+    
+    # Create a dictionary with 'college' as keys and 'events' as values
+    scraped_data_dict = {doc['college']: doc['events'] for doc in scraped_data}
+
+    return render_template('event-details.html', scraped_data=scraped_data_dict)
+
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+@app.route('/demo')
+def demo():
+    return render_template('demo.html')
+
+@app.route('/login')
+def login():
+    return render_template('login.html')
+
+@app.route('/ticket-details')
+def ticket_details():
+    return render_template('ticket-details.html')
 
 if __name__ == '__main__':
     app.run(debug=True)
