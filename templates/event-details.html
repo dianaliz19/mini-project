@@ -36,6 +36,18 @@
     </div>
   </div>
   <!-- ***** Preloader End ***** -->
+  <!-- ***** Pre HEader ***** -->
+  <div class="container">
+    <div class="row">
+      <div class="col-lg-6 col-sm-6">
+      </div>
+      <div class="col-lg-6 col-sm-6">
+        <div class="text-button" style="padding-left: 394px;">
+          <a href="#footer">Contact Us Now! <i class="fa fa-arrow-right"></i></a>
+        </div>
+      </div>
+    </div>
+  </div>
   <!-- ***** Header Area Start ***** -->
   <header class="header-area header-sticky">
     <div class="container">
@@ -91,6 +103,8 @@
               {{ event.strip() }}<br> <!-- Strip extra spaces or newlines -->
               {% endif %}
               {% endfor %}
+              <br>
+              <button type="button" class="btn btn-secondary btn-lg btn-block">Block level button</button>
             </li>
             {% endfor %}
           </ul>
@@ -98,6 +112,34 @@
       </div>
     </div>
   </div>
+
+  <!-- *** Subscribe *** -->
+  <div class="subscribe">
+    <div class="container">
+      <div class="row">
+        <div class="col-lg-4">
+          <h4>Subscribe Our Newsletter:</h4>
+        </div>
+        <div class="col-lg-8">
+          <form id="subscribe" action="" method="get">
+            <div class="row">
+              <div class="col-lg-9">
+                <fieldset>
+                  <input name="email" type="text" id="email" pattern="[^ @]*@[^ @]*" placeholder="Your Email Address" required="">
+                </fieldset>
+              </div>
+              <div class="col-lg-3">
+                <fieldset>
+                  <button type="submit" id="form-submit" class="main-dark-button">Submit</button>
+                </fieldset>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- ***** Footer ***** -->
   <footer>
     <div class="container">
@@ -114,18 +156,53 @@
             <ul>
               <li><a href="{{ url_for('about') }}">About us</a></li>
               <li><a href="#footer">Contact</a></li>
+              <li><a href="{{ url_for('event_details') }}">Event</a></li>
+              <li><a href="{{ url_for('login') }}">Login</a></li>
             </ul>
           </div>
         </div>
         <div class="col-lg-4">
-          <div class="social-icons">
-            <h4>CONNECT WITH US</h4>
-            <ul>
-              <li><a href="#"><i class="fa fa-facebook"></i></a></li>
-              <li><a href="#"><i class="fa fa-twitter"></i></a></li>
-              <li><a href="#"><i class="fa fa-linkedin"></i></a></li>
-              <li><a href="#"><i class="fa fa-instagram"></i></a></li>
-            </ul>
+          <div class="hours">
+            <div id="footer">
+              <h4>CONTACT US</h4>
+              <ul>
+                <li>chn21cs046@ceconline.edu</li>
+                <li>COLLEGE OF ENGINEERING</li>
+                <li>CHENGANNUR</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-12">
+          <div class="under-footer">
+            <div class="row">
+              <div class="col-lg-6 col-sm-6">
+              </div>
+              <div class="col-lg-6 col-sm-6">
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-12">
+          <div class="sub-footer">
+            <div class="row">
+              <div class="col-lg-3">
+              </div>
+              <div class="col-lg-6">
+                <div class="menu">
+                  Copyright 2024 EventScope Company
+                </div>
+              </div>
+              <div class="col-lg-3">
+                <div class="social-links">
+                  <ul>
+                    <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+                    <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+                    <li><a href="#"><i class="fa fa-instagram"></i></a></li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
