@@ -21,6 +21,23 @@
     .event-list li {
       margin-bottom: 10px;
     }
+    .button {
+      border: none;
+      color: white;
+      padding: 5px 20px;
+      text-align: centre;
+      text-decoration: none;
+      /*display: inline-block;*/
+      font-size: 15px;
+      /*margin: 4px 2px;*/
+      cursor: pointer;
+      background-color: black;
+    }
+    .fixed {
+      position: fixed;
+      right: 10px;
+      left: 10px;
+    }
   </style>
 </head>
 <body>
@@ -95,20 +112,21 @@
         </div>
         <div class="col-lg-12">
           <ul class="event-list">
-            {% for college, events in scraped_data.items() %}
-            <li>
-              <strong>{{ college }}</strong><br>
-              {% for event in events %}
-              {% if event.strip() %}
-              {{ event.strip() }}<br> <!-- Strip extra spaces or newlines -->
-              {% endif %}
+              {% for college_data in scraped_data.colleges %}
+              <li>
+                  <strong>{{ college_data.college }}</strong>
+                  <br>
+                  {% for event in college_data.events %}
+                      {% if event.strip() %}
+                          {{ event.strip() }}<br> <!-- Strip extra spaces or newlines -->
+                      {% endif %}
+                  {% endfor %}
+                  <br>
+                  <a href="{{ college_data.url }}" class="btn btn-dark btn-lg btn-block" role="button" data-bs-toggle="button">COLLEGE LINK</a>
+              </li>
               {% endfor %}
-              <br>
-              <button type="button" class="btn btn-secondary btn-lg btn-block">Block level button</button>
-            </li>
-            {% endfor %}
           </ul>
-        </div>
+        </div>      
       </div>
     </div>
   </div>
