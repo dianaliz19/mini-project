@@ -91,7 +91,7 @@ def index():
 def event_details():
     collection.delete_many({})
     # Scrape events from College A and College B
-    events_iit =scrape_data(url)
+    events_iit = scrape_data(url)
     events_nit = scrape_nit()
     events_cet = scrape_cet()
     
@@ -99,11 +99,19 @@ def event_details():
     print("NIT events:", events_nit)
     print("CET events:", events_cet)
     # Store the scraped events in MongoDB
-    collection.insert_one({'college': 'iit', 'events': events_iit})
-    collection.insert_one({'college': 'nit', 'events': events_nit.split('\n')})
-    collection.insert_one({'college': 'Cet', 'events': events_cet.split('\n')})
+    college_data = [
+        {'college': 'IIT Palakkad', 'url': 'https://www.iitpkd.ac.in/past-events', 'events': events_iit},
+        {'college': 'NIT Calicut', 'url': 'https://nitc.ac.in/upcoming-events', 'events': events_nit.split('\n')},
+        {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')}
+    ]
+    
+    collection.insert_one({'colleges': college_data})
+    
     # Retrieve the scraped events from MongoDB
-    scraped_data = collection.find({},{'_id':0})
+    scraped_data = collection.find_one({}, {'_id': 0})
+
+    print("Scraped data:", scraped_data)  # Print scraped data for debugging
+
     return render_template('event-details.html', scraped_data=scraped_data)
 
 @app.route('/about')
