@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EventScope</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/login.css') }}">
+
+    <link rel="icon" href="{{ url_for('static', filename='assets/images/download.png') }}" type="image/x-icon">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background: url("{{ url_for('static', filename='assets/images/bg2.jpg') }}");
+            background-size: cover;
+            background-position: center;
+            font-family: sans-serif;
+        }
+    </style>
+</head>
+<body>
+    <div class="login">
+        <form action="/login" method="POST">
+            <h1>LOG IN</h1>
+            <label> Username</label>
+            <input type="text" name="username">
+            <label> Password</label>
+            <input type="password" name="password">
+            <button type="submit">Submit</button>
+        </form>
+    </div>
+</body>
+</html>
