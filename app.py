@@ -71,6 +71,24 @@ def scrape_nit():
     else:
         return []
     
+def scrape_nitTrichy():
+    url = 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/'
+    response = requests.get(url)
+    if response.status_code == 200:
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        events_container = data.find("div", id="contentcontainer")
+        if events_container:
+            event_elements = events_container.find_all("li")
+            event_text = [event.get_text(strip=True) for event in event_elements]
+            for i in range(len(event_text)):
+                event_text[i] = ' '.join(event_text[i].split())
+            return event_text
+        else:
+            return "No events found on the page"
+    else:
+        return "Failed to retrieve the webpage"
+    
 def scrape_cet():
     url='https://www.cet.ac.in/short-term-courses/'
     response = requests.get(url)
@@ -92,15 +110,18 @@ def event_details():
     collection.delete_many({})
     # Scrape events from College A and College B
     events_iit = scrape_data(url)
+    events_nitTrichy = scrape_nitTrichy()
     events_nit = scrape_nit()
     events_cet = scrape_cet()
     
     print("IIT events:", events_iit)
+    print("NIT Trichy events:", events_nitTrichy)
     print("NIT events:", events_nit)
     print("CET events:", events_cet)
     # Store the scraped events in MongoDB
     college_data = [
         {'college': 'IIT Palakkad', 'url': 'https://www.iitpkd.ac.in/past-events', 'events': events_iit},
+        {'college': 'NIT Trichy', 'url': 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/', 'events': events_nitTrichy},
         {'college': 'NIT Calicut', 'url': 'https://nitc.ac.in/upcoming-events', 'events': events_nit.split('\n')},
         {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')}
     ]
