@@ -1,28 +1,39 @@
-from flask import Flask, render_template
+from flask import Flask, render_template, request, session, url_for
+from bson import ObjectId
+from flask import redirect
 from pymongo import MongoClient
 import requests
 from bs4 import BeautifulSoup
+import bcrypt
 
 app = Flask(__name__)
+app.secret_key = 'your_secret_key'
 
 # MongoDB configuration
 MONGO_URI = 'mongodb://localhost:27017/'
 DB_NAME = 'college_events'
 COLLECTION_NAME = 'events'
+ADMIN_COLLECTION_NAME = 'admin'
+OTHER_COLLECTION_NAME = 'other_events'
 
-# Initialize MongoDB client and collection
 client = MongoClient(MONGO_URI)
 db = client[DB_NAME]
 collection = db[COLLECTION_NAME]
+admin_collection = db[ADMIN_COLLECTION_NAME]
+other_collection = db[OTHER_COLLECTION_NAME]
 
-# Function to scrape events from College A website
+# Ensure other_events collection exists
+if OTHER_COLLECTION_NAME not in db.list_collection_names():
+    db.create_collection(OTHER_COLLECTION_NAME)
+
+# Function to scrape iit palakkad
 url = 'https://www.iitpkd.ac.in/past-events'
 
 # Define the keywords to search for
 keywords = ['workshop', 'lecture', 'convention', 'research']
 
 # Function to extract text content from past events section of the webpage
-def extract_text_after_past_events(url):
+def scrape_data(url):
     response = requests.get(url)
     soup = BeautifulSoup(response.content, 'html.parser')
 
@@ -52,58 +63,111 @@ def extract_text_after_past_events(url):
     else:
         return []
 
-# Main function to scrape data
-def scrape_data(url):
-    text = extract_text_after_past_events(url)
-    return text
+def scrape_nitRaipur():
+    url = 'https://nitrr.ac.in/conferences.php'
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout to prevent hanging
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events_container = data.find(id="datacontainer")
+            event_text = events_container.get_text().strip()
+            events = [' '.join(event.split()) for event in event_text.split('\n') if event.strip()]
+            return events
+        else:
+            return "Site Down"
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
 
+def scrape_nitNagpur():
+    url = 'https://vnit.ac.in/category/events/'
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events = data.find_all(class_="entry-article-part entry-article-header")
+            event_list = []
+            for event in events:
+                results = event.find(class_="entry-title entry--item")
+                event_text = results.get_text()
+                cleaned_event = ' '.join(event_text.split())
+                event_list.append(cleaned_event)
+            return event_list
+        else:
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
 
 def scrape_nit():
-    url='https://nitc.ac.in/upcoming-events'
-    response = requests.get(url)
-    if response.status_code == 200:
-        text=response.content
-        data=BeautifulSoup(text,'html.parser')
-        events=data.find(class_="xc-page-column-right")
-        results=events.find(class_="xc-calendar-list")
-        event_text = results.get_text(separator='\n')
-        return event_text.strip()
-    else:
-        return []
-    
+    url = 'https://nitc.ac.in/upcoming-events'
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout to prevent hanging
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events = data.find(class_="xc-page-column-right")
+            results = events.find(class_="xc-calendar-list")
+            event_text = results.get_text(separator='\n')
+            return event_text.strip()
+        else:
+            return "Site Down"
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
+
+
 def scrape_nitTrichy():
     url = 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/'
-    response = requests.get(url)
-    if response.status_code == 200:
-        text = response.content
-        data = BeautifulSoup(text, 'html.parser')
-        events_container = data.find("div", id="contentcontainer")
-        if events_container:
-            event_elements = events_container.find_all("li")
-            event_text = [event.get_text(strip=True) for event in event_elements]
-            for i in range(len(event_text)):
-                event_text[i] = ' '.join(event_text[i].split())
-            return event_text
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout to prevent hanging
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events_container = data.find("div", id="contentcontainer")
+            if events_container:
+                event_elements = events_container.find_all("li")
+                event_text = [event.get_text(strip=True) for event in event_elements]
+                for i in range(len(event_text)):
+                    event_text[i] = ' '.join(event_text[i].split())
+                return event_text
+            else:
+                return "No events found on the page"
         else:
-            return "No events found on the page"
-    else:
-        return "Failed to retrieve the webpage"
-    
+            return "Site Down"
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
+
+
 def scrape_cet():
-    url='https://www.cet.ac.in/short-term-courses/'
-    response = requests.get(url)
-    if response.status_code == 200:
-        text=response.content
-        data=BeautifulSoup(text,'html.parser')
-        events=data.find(id="lcp_instance_0")
-        event_text = events.get_text(separator='\n')
-        return event_text.strip()
-    else:
-        return []
-    
+    url = 'https://www.cet.ac.in/short-term-courses/'
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout to prevent hanging
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events = data.find(id="lcp_instance_0")
+            event_text = events.get_text(separator='\n')
+            return event_text.strip()
+        else:
+            return "Site Down"
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
+
+
 @app.route('/')
 def index():
-    return render_template('index.html')
+    # Retrieve the scraped events from MongoDB
+    scraped_data = collection.find_one({}, {'_id': 0})
+    if scraped_data is None:
+        scraped_data = {}
+
+    return render_template('index.html', scraped_data=scraped_data)
+
 
 @app.route('/event-details')
 def event_details():
@@ -111,45 +175,146 @@ def event_details():
     # Scrape events from College A and College B
     events_iit = scrape_data(url)
     events_nitTrichy = scrape_nitTrichy()
+    events_nitNagpur = scrape_nitNagpur()
     events_nit = scrape_nit()
+    events_nitRaipur = scrape_nitRaipur()
     events_cet = scrape_cet()
-    
+
     print("IIT events:", events_iit)
     print("NIT Trichy events:", events_nitTrichy)
     print("NIT events:", events_nit)
+    print("NIT events:", events_nitRaipur)
     print("CET events:", events_cet)
+
     # Store the scraped events in MongoDB
     college_data = [
         {'college': 'IIT Palakkad', 'url': 'https://www.iitpkd.ac.in/past-events', 'events': events_iit},
-        {'college': 'NIT Trichy', 'url': 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/', 'events': events_nitTrichy},
+        {'college': 'NIT Trichy','url': 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/','events': events_nitTrichy},
+        {'college': 'NIT Nagpur', 'url': 'https://vnit.ac.in/category/events/', 'events': events_nitNagpur},
         {'college': 'NIT Calicut', 'url': 'https://nitc.ac.in/upcoming-events', 'events': events_nit.split('\n')},
+        {'college': 'NIT Raipur', 'url': 'https://nitrr.ac.in/', 'events': events_nitRaipur},
         {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')}
     ]
-    
+
     collection.insert_one({'colleges': college_data})
-    
+
     # Retrieve the scraped events from MongoDB
     scraped_data = collection.find_one({}, {'_id': 0})
 
     print("Scraped data:", scraped_data)  # Print scraped data for debugging
 
-    return render_template('event-details.html', scraped_data=scraped_data)
+    return render_template('event-details.html', scraped_data=scraped_data, other_events=other_collection.find())
+
 
 @app.route('/about')
 def about():
     return render_template('about.html')
 
+
 @app.route('/demo')
 def demo():
     return render_template('demo.html')
 
-@app.route('/login')
+
+# Admin login route
+@app.route('/login', methods=['GET', 'POST'])
 def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        admin = admin_collection.find_one({'username': username})
+
+        if admin:
+            if bcrypt.checkpw(password.encode('utf-8'), admin['password']):
+                session['admin_id'] = str(admin['_id'])
+                return redirect(url_for('dashboard'))
+
+        # Login failed
+        return render_template('login.html', error='Invalid username or password')
+
     return render_template('login.html')
 
-@app.route('/ticket-details')
-def ticket_details():
-    return render_template('ticket-details.html')
+
+# Admin logout route
+@app.route('/logout', methods=['GET', 'POST'])
+def logout():
+    session.clear()
+    return redirect(url_for('index'))
+
+
+# Admin dashboard route
+@app.route('/dashboard')
+def dashboard():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+
+    events = collection.find()
+    return render_template('dashboard.html', events=events)
+
+
+# Add event route (for admins only)
+@app.route('/add_event', methods=['POST'])
+def add_event():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        college = request.form['college']
+        event_name = request.form['event_name']
+
+        if not college or not event_name:
+            return "Error: College and event name are required fields"
+
+        other_collection.update_one({'college': college}, {'$push': {'events': event_name}}, upsert=True)
+
+        return redirect(url_for('dashboard'))
+    else:
+        return "Error: Method not allowed"
+
+
+# Delete event route (for admins only)
+@app.route('/delete_event', methods=['POST'])
+def delete_event():
+    if 'admin_id' not in session:
+        return redirect(url_for('login'))
+
+    if request.method == 'POST':
+        # Retrieve the event ID from the form data
+        event_id = request.form.get('event_id')
+
+        # Convert the event ID to ObjectId
+        event_id = ObjectId(event_id)
+
+        # Delete the event from the MongoDB collection
+        collection.delete_one({'_id': event_id})
+
+        return redirect(url_for('dashboard'))
+
+    # If accessed via GET request, redirect back to the dashboard
+    return redirect(url_for('dashboard'))
+
+
+# Register admin route (optional)
+@app.route('/register_admin', methods=['GET', 'POST'])
+def register_admin():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        # Check if username already exists
+        if admin_collection.find_one({'username': username}):
+            return render_template('register_admin.html', error='Username already exists')
+
+        # Hash password
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
+        # Insert admin into database
+        admin_collection.insert_one({'username': username, 'password': hashed_password})
+        return redirect(url_for('login'))
+
+    return render_template('register_admin.html')
+
 
 if __name__ == '__main__':
     app.run(debug=True)
