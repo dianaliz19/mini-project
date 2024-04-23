@@ -100,6 +100,57 @@ def scrape_nitNagpur():
     except requests.exceptions.RequestException as e:
         print(f"Error: {e}")
         return "Site Down"
+    
+def scrape_nitSurathkal():
+    url = 'https://www.nitk.ac.in/upcoming_events'
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            events = data.find_all(class_="gdlr-core-event-item-content-wrap")
+            event_list = []
+            for event in events:
+                event_text = event.get_text().strip()
+                event_list.append(event_text)
+            return event_list
+        else:
+            return []
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
+
+def scrape_cusat():
+    url = 'https://www.cusat.ac.in/events'
+    try:
+        response = requests.get(url, timeout=5)  # Set a timeout to prevent hanging
+        if response.status_code == 200:
+            text = response.content
+            data = BeautifulSoup(text, 'html.parser')
+            data = BeautifulSoup(text, 'html.parser')
+            events = data.find("div", class_="ed-about-tit")
+            item=[]
+            if events:
+                event_text = events.get_text().strip()
+                # Split the event text by newline character to identify separate events
+                events_list = event_text.split('\n')
+                current_event = ""
+                for event in events_list[1:]:
+                    event = ' '.join(event.split())  # Remove extra whitespaces
+                    if event:  # Check if event is not empty
+                        if event.isdigit() or event.startswith("Read more"):
+                            continue  # Skip event dates and "Read more" lines
+                        else:
+                            #print(event)  # Print event title
+                            item.append(event)
+            else:
+                print("No events found")
+            return item
+        else:
+            return "Site Down"
+    except requests.exceptions.RequestException as e:
+        print(f"Error: {e}")
+        return "Site Down"
 
 def scrape_nit():
     url = 'https://nitc.ac.in/upcoming-events'
@@ -176,8 +227,10 @@ def event_details():
     events_iit = scrape_data(url)
     events_nitTrichy = scrape_nitTrichy()
     events_nitNagpur = scrape_nitNagpur()
+    events_cusat = scrape_cusat()
     events_nit = scrape_nit()
     events_nitRaipur = scrape_nitRaipur()
+    events_nitSurathkal = scrape_nitSurathkal()
     events_cet = scrape_cet()
 
     print("IIT events:", events_iit)
@@ -191,7 +244,9 @@ def event_details():
         {'college': 'IIT Palakkad', 'url': 'https://www.iitpkd.ac.in/past-events', 'events': events_iit},
         {'college': 'NIT Trichy','url': 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/','events': events_nitTrichy},
         {'college': 'NIT Nagpur', 'url': 'https://vnit.ac.in/category/events/', 'events': events_nitNagpur},
+        {'college': 'CUSAT', 'url': 'https://www.cusat.ac.in/events', 'events': events_cusat},
         {'college': 'NIT Calicut', 'url': 'https://nitc.ac.in/upcoming-events', 'events': events_nit.split('\n')},
+        {'college': 'NIT Surathkal', 'url': 'https://www.nitk.ac.in/upcoming_events', 'events': events_nitSurathkal},
         {'college': 'NIT Raipur', 'url': 'https://nitrr.ac.in/', 'events': events_nitRaipur},
         {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')}
     ]
