@@ -1,0 +1,64 @@
+
+.search-box{
+    width:400px;
+    background: #fff;
+    margin:200px auto 0;
+    margin: top -12px;
+    border: 1px solid #ccc;
+    border-radius: 50px;
+
+}
+
+.row {
+    display:flex;
+    align-items: center;
+    padding: 10px;
+    padding-left: 25px;
+
+}
+input{
+    flex:1;
+   
+    background: transparent;
+    border: 0;
+    outline: 0;
+    font-size: 18px;
+    color:#333;
+
+}
+
+
+
+button{
+    background:transparent;
+    border: 0;
+    outline:0;
+    margin: right 18px;
+}
+button.fa-solid{
+    width: 15px;
+    color:#555;
+    font-size:22px;
+    cursor: pointer;
+    margin-right: 10px;
+    
+}
+.fa-solid, .fas {
+    font-family: "Font Awesome 6 Free";
+    font-weight: 900;
+    padding-right: 10px;
+}
+::placeholder{
+    color:#555
+}
+
+.suggestion {
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .suggestion:hover {
+    background-color: #f0f0f0;
+  }
+ 
