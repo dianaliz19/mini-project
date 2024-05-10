@@ -5,6 +5,7 @@ from pymongo import MongoClient
 import requests
 from bs4 import BeautifulSoup
 import bcrypt
+from bson.objectid import ObjectId
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key'
@@ -169,6 +170,20 @@ def scrape_nit():
         print(f"Error: {e}")
         return "Site Down"
 
+def scrape_iitbhu():
+    url = 'https://www.iitbhu.ac.in/events'
+    response = requests.get(url)
+    if response.status_code == 200:
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        events = data.find_all(class_="text-align-justify")
+        event_list = []
+        for event in events:
+            event_text = event.get_text().strip()
+            event_list.append(event_text)
+        return event_list
+    else:
+        return []
 
 def scrape_nitTrichy():
     url = 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/'
@@ -192,6 +207,22 @@ def scrape_nitTrichy():
         print(f"Error: {e}")
         return "Site Down"
 
+def scrape_nitJaipur():
+    url = 'https://mnit.ac.in/news/newsall?type=event'
+    response = requests.get(url)
+    if response.status_code == 200:
+        text = response.content
+        data = BeautifulSoup(text, 'html.parser')
+        event_list = []
+        event_divs = data.find_all(id="pills-2")
+        for div in event_divs:
+            event_tags = div.find_all('a')
+            for event in event_tags:
+                event_text = event.get_text().strip()
+                event_list.append(event_text)
+        return event_list
+    else:
+        return []
 
 def scrape_cet():
     url = 'https://www.cet.ac.in/short-term-courses/'
@@ -232,12 +263,8 @@ def event_details():
     events_nitRaipur = scrape_nitRaipur()
     events_nitSurathkal = scrape_nitSurathkal()
     events_cet = scrape_cet()
-
-    print("IIT events:", events_iit)
-    print("NIT Trichy events:", events_nitTrichy)
-    print("NIT events:", events_nit)
-    print("NIT events:", events_nitRaipur)
-    print("CET events:", events_cet)
+    events_nitJaipur = scrape_nitJaipur()
+    events_iitbhu = scrape_iitbhu()
 
     # Store the scraped events in MongoDB
     college_data = [
@@ -245,20 +272,26 @@ def event_details():
         {'college': 'NIT Trichy','url': 'https://www.nitt.edu/home/academics/departments/meta/events/workshops/','events': events_nitTrichy},
         {'college': 'NIT Nagpur', 'url': 'https://vnit.ac.in/category/events/', 'events': events_nitNagpur},
         {'college': 'CUSAT', 'url': 'https://www.cusat.ac.in/events', 'events': events_cusat},
+        {'college': 'NIT Jaipur', 'url': 'https://mnit.ac.in/news/newsall?type=event', 'events': events_nitJaipur},
         {'college': 'NIT Calicut', 'url': 'https://nitc.ac.in/upcoming-events', 'events': events_nit.split('\n')},
         {'college': 'NIT Surathkal', 'url': 'https://www.nitk.ac.in/upcoming_events', 'events': events_nitSurathkal},
         {'college': 'NIT Raipur', 'url': 'https://nitrr.ac.in/', 'events': events_nitRaipur},
-        {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')}
+        {'college': 'CET', 'url': 'https://www.cet.ac.in/short-term-courses/', 'events': events_cet.split('\n')},
+        {'college': 'IIT Bhuvaneshvar', 'url': 'https://www.iitbhu.ac.in/events', 'events': events_iitbhu}
     ]
+
 
     collection.insert_one({'colleges': college_data})
 
     # Retrieve the scraped events from MongoDB
     scraped_data = collection.find_one({}, {'_id': 0})
 
+    # Retrieve other events from other_collection
+    other_events = other_collection.find()
+
     print("Scraped data:", scraped_data)  # Print scraped data for debugging
 
-    return render_template('event-details.html', scraped_data=scraped_data, other_events=other_collection.find())
+    return render_template('event-details.html', scraped_data=scraped_data, other_events=other_events)
 
 
 @app.route('/about')
@@ -297,6 +330,11 @@ def logout():
     session.clear()
     return redirect(url_for('index'))
 
+# Admin registration route
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    session.clear()
+    return redirect(url_for('register_admin'))
 
 # Admin dashboard route
 @app.route('/dashboard')
@@ -304,8 +342,14 @@ def dashboard():
     if 'admin_id' not in session:
         return redirect(url_for('login'))
 
-    events = collection.find()
-    return render_template('dashboard.html', events=events)
+    # Fetch events from the main events collection
+    events_main = collection.find()
+
+    # Fetch events from the other_events collection
+    other_events = other_collection.find()
+
+    return render_template('dashboard.html', events_main=events_main, other_events=other_events)
+
 
 
 # Add event route (for admins only)
@@ -338,13 +382,24 @@ def delete_event():
         # Retrieve the event ID from the form data
         event_id = request.form.get('event_id')
 
-        # Convert the event ID to ObjectId
-        event_id = ObjectId(event_id)
+        # Validate event_id
+        try:
+            event_id = ObjectId(event_id)
+        except Exception as e:
+            print("Invalid event ID:", e)
+            return "Invalid event ID"
 
-        # Delete the event from the MongoDB collection
-        collection.delete_one({'_id': event_id})
-
-        return redirect(url_for('dashboard'))
+        # Try to delete the event from the other_events collection
+        try:
+            result = other_collection.delete_one({'_id': event_id})
+            if result.deleted_count == 1:
+                print("Event deleted successfully")
+            else:
+                print("Event not found or not deleted")
+            return redirect(url_for('dashboard'))
+        except Exception as e:
+            print("Error deleting event:", e)
+            return "Error deleting event. Please try again later."
 
     # If accessed via GET request, redirect back to the dashboard
     return redirect(url_for('dashboard'))
