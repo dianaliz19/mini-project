@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .event {
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        form {
+            margin-top: 20px;
+        }
+        input[type="text"],
+        input[type="password"],
+        button {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 5px;
+        }
+        button {
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <!-- Display events and provide options to add or delete events -->
+        <div>
+            <!-- Display events from main collection -->
+            <h2>Main Events</h2>
+            {% for event in events_main %}
+                <div class="event">{{ event }}</div>
+            {% endfor %}
+        </div>
+        <div>
+            <!-- Display events from other_events collection -->
+            <h2>Other Events</h2>
+            {% for event in other_events %}
+                <div class="event">{{ event }}</div>
+            {% endfor %}
+        </div>
+        
+        <!-- Add event form -->
+        <form action="/add_event" method="POST">
+            <label>College Name:</label>
+            <input type="text" name="college">
+            <label>Event Name:</label>
+            <input type="text" name="event_name">
+            <button type="submit">Add</button>
+        </form>
+        <!-- Delete event form -->
+        <form action="/delete_event" method="POST">
+            <label>Delete Event ID:</label>
+            <input type="text" name="event_id"> <!-- Remove any extra characters -->
+            <button type="submit">Delete</button>
+        </form>
+        <!-- Logout button -->
+        <form action="/logout" method="POST">
+            <button type="submit">Logout</button>
+        </form>
+        <form action="/register" method="POST">
+            <button type="submit">Register Admin</button>
+        </form>
+    </div>
+</body>
+</html>
