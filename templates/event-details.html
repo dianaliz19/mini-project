@@ -13,6 +13,7 @@
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/font-awesome.css') }}">
   <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='assets/css/owl-carousel.css') }}">
   <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/tooplate-artxibition.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='assets/css/search.css') }}">
   <style>
     .event-list {
       list-style: none;
@@ -69,8 +70,17 @@
   <header class="header-area header-sticky">
     <div class="container">
       <div class="row">
-        <div class="col-12">
-          <nav class="main-nav">
+        <div class="col-12i">
+          <!--search box-->
+          <div class="search-box" style="margin-top: -12px;">
+            <div class="row">
+              <input type="text" id="myInput" placeholder="   Search..." autocomplete="off">
+              <button><i class="fa-solid fa-magnifying-glass"></i></button>
+            </div>
+            <div id="suggestion-box"></div>
+          </div>
+            <!--search box end-->
+            <nav class="main-nav">
             <!-- ***** Logo Start ***** -->
             <a href="{{ url_for('index') }}" class="logo">Event<em>Scope</em></a>
             <!-- ***** Logo End ***** -->
@@ -125,6 +135,12 @@
                   <a href="{{ college_data.url }}" class="btn btn-dark btn-lg btn-block" role="button" data-bs-toggle="button">COLLEGE LINK</a>
               </li>
               {% endfor %}
+              <li>
+              <strong>Other Events</strong><br>
+              {% for other_event in other_events %}
+                  {{ other_event.college }} : {{ other_event.events|join(' ') }}<br>
+              {% endfor %}
+            </li>
           </ul>
         </div>      
       </div>
@@ -240,6 +256,7 @@
   <script src="{{ url_for('static', filename='assets/js/mixitup.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/accordions.js') }}"></script>
   <script src="{{ url_for('static', filename='assets/js/owl-carousel.js') }}"></script>
+  <script src="{{ url_for('static', filename='assets/js/search.js') }}"></script>
   <!-- Global Init -->
   <script src="{{ url_for('static', filename='assets/js/custom.js') }}"></script>
 </body>
