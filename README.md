@@ -1,0 +1,1 @@
+EventScope is a centralized platform for viewing and searching for events from various colleges. Built using Python Flask and BeautifulSoup, it scrapes event details from multiple college websites and displays them in a unified interface.
